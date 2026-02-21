@@ -3319,12 +3319,30 @@ t0 = std::chrono::steady_clock::now();
 	void bcast_blob_from_owner(int owner, std::vector<std::uint8_t>& blob) {
 		int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-		int len = (rank == owner) ? static_cast<int>(blob.size()) : 0;
-		MPI_Bcast(&len, 1, MPI_INT, owner, MPI_COMM_WORLD);
+		std::int64_t len64 = 0;
+		if (rank == owner) len64 = static_cast<std::int64_t>(blob.size());
 
-		if (rank != owner) blob.resize(len);
-		if (len > 0) {
-			MPI_Bcast(blob.data(), len, MPI_BYTE, owner, MPI_COMM_WORLD);
+		MPI_Bcast(&len64, 1, MPI_INT64_T, owner, MPI_COMM_WORLD);
+
+		if(len64<0){
+			throw std::runtime_error("negative blob size");
+		}
+
+		if (static_cast<std::uint64_t>(len64) > static_cast<std::uint64_t>(std::numeric_limits<size_t>::max()))
+			throw std::runtime_error("blob too large for this process address space");
+
+		const size_t len = static_cast<size_t>(len64);
+		if(rank != owner) blob.resize(len);
+
+		const int maxCount = std::numeric_limits<int>::max(); // MPI count limit
+		size_t offset = 0;
+		while (offset < len) {
+			int chunk = (len - offset > static_cast<size_t>(maxCount))
+				  ? maxCount
+				  : static_cast<int>(len - offset);
+
+			MPI_Bcast(blob.data() + offset, chunk, MPI_BYTE, owner, MPI_COMM_WORLD);
+			offset += static_cast<size_t>(chunk);
 		}
 	}
 
