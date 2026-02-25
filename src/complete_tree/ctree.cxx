@@ -2690,11 +2690,11 @@ t0 = std::chrono::steady_clock::now();
 
 			if(myrank==0){
 				LOG()<<"        Memory report";
-				LOG()<<"			"<<how_big<Tree::TreeSt>(tree)<<" GB for tree";
-				LOG()<<"			"<<how_big<Tree::TreeKey>(key)<<" GB for key";
-				LOG()<<"			"<<how_big<ControlSt>(data)<<" GB for data";
-				LOG()<<"			"<<how_big<CT_I32>(dkey)<<" GB for dkey";
-				LOG()<<"	At least : "<<how_big<Tree::TreeSt>(tree)+how_big<Tree::TreeKey>(key)+how_big<ControlSt>(data)+how_big<CT_I32>(dkey)<<" GB for MPI";
+				LOG()<<"			"<<how_big<Tree::TreeSt>(tree)<<" GB/MPI for tree";
+				LOG()<<"			"<<how_big<Tree::TreeKey>(key)<<" GB/MPI for key";
+				LOG()<<"			"<<how_big<ControlSt>(data)<<" GB/MPI for data";
+				LOG()<<"			"<<how_big<CT_I32>(dkey)<<" GB/MPI for dkey";
+				LOG()<<"	At least : "<<how_big<Tree::TreeSt>(tree)+how_big<Tree::TreeKey>(key)+how_big<ControlSt>(data)+how_big<CT_I32>(dkey)<<" GB/MPI";
 				LOG()<<" ";
 				//LOG()<<"		"<<tree[0].lind<<" / "<<tree.size();
 

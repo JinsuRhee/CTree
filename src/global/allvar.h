@@ -42,7 +42,7 @@ namespace vctree_parameters{
 namespace vctree_set{
 
 	// Create Settings structure
-	struct vr_pointerSt{ int32_t fnum=-1; int32_t offset; int32_t offset_pb; int32_t offset_pu; int32_t nb; int32_t nu; int32_t nt;};
+	struct vr_pointerSt{ int32_t fnum=-1; int64_t offset; int32_t offset_pb; int32_t offset_pu; int32_t nb; int32_t nu; int32_t nt;};
 	
 
 	struct snapSt{
@@ -82,7 +82,7 @@ namespace vctree_set{
 
 		// For HM IO
 		std::string hm_dir_catalog 	= "./catalog/";
-		std::vector< std::vector<int32_t> > hm_gpointer;
+		std::vector< std::vector<int64_t> > hm_gpointer;
 
 
 		// For Arbitrary IO

@@ -113,7 +113,7 @@ namespace IO_VR{
 	using GalArray = IO_dtype::GalArray;
 
 	
-	inline void in_gpt(std::vector<vctree_set::vr_pointerSt>& gpt, VRT_GID id, VRT_I32 fnum, VRT_I32 offset){
+	inline void in_gpt(std::vector<vctree_set::vr_pointerSt>& gpt, VRT_GID id, VRT_I32 fnum, VRT_I64 offset){
 		if((VRT_GID) gpt.size() <= id){
 			gpt.resize(id+10000);
 		}
@@ -386,7 +386,7 @@ namespace IO_VR{
 			pick_id = 0;
 
 			VRT_I32 mpinum = gpt[id0].fnum;
-			VRT_I32 offset = gpt[id0].offset;
+			VRT_I64 offset = gpt[id0].offset;
 
 			std::ifstream f(dir + "/" + flist[mpinum].fname, std::ios::binary);
 			f.seekg(offset);
@@ -836,7 +836,7 @@ namespace IO_HM{
 	using GalSt = IO_dtype::GalSt;
 	using GalArray = IO_dtype::GalArray;
 
-	inline void in_gpt(std::vector<int32_t>& gpt, HM_I32 id, HM_I32 pointer){
+	inline void in_gpt(std::vector<int64_t>& gpt, HM_I32 id, HM_I64 pointer){
 		if((HM_I32) gpt.size() <= id){
 			gpt.resize(id*2);
 		}
@@ -862,7 +862,7 @@ namespace IO_HM{
 		}
 
 		//check the presence of pointer
-		std::vector<int32_t>& gpt = vh.hm_gpointer[snap_curr];
+		std::vector<int64_t>& gpt = vh.hm_gpointer[snap_curr];
 
 		if(gpt.size()==0){ // have no information about file pointer
 
@@ -870,8 +870,9 @@ namespace IO_HM{
 			gpt.resize(ini_max_id);
 			GalArray gal;
 
-			HM_I32 nbodies, nmain, nsub, nall;
-			HM_I32 curr_pt = 0;
+			HM_I32 nbodies, nmain, nsub, nall, nbin;
+			HM_I64 curr_pt = 0;
+			nbin = 0;
 
 			// READ nbodies
 			auto rec 	= read_f77_record(ifs);
@@ -902,7 +903,7 @@ namespace IO_HM{
 			std::vector<HM_I32> pid;
 			std::vector<char> rec2;
 
-			HM_I32 curr_pt_old;
+			HM_I64 curr_pt_old;
 			for(HM_I32 i=0; i<nall; i++){
 
 				curr_pt_old = curr_pt;
@@ -966,7 +967,12 @@ namespace IO_HM{
 
 				// skip sigma
 				skip_f77_record(ifs);
-				curr_pt 	+= (4+8+4);
+				if(vh.horg == 'h'){
+					curr_pt 	+= (4+8+4);
+				}else if(vh.horg == 'g'){
+					curr_pt 	+= (4+8*3+4);
+				}
+				
 
 				// skip virial
 				skip_f77_record(ifs);
@@ -976,6 +982,21 @@ namespace IO_HM{
 				skip_f77_record(ifs);
 				curr_pt 	+= (4+8*2+4);
 
+				// additional skip for GalaxyMaker Data
+				if(vh.horg == 'g'){
+					// # of bin
+					rec 	= read_f77_record(ifs);
+					std::memcpy(&nbin, rec.data(), 4);
+					curr_pt 	+= (4+4*1+4);
+
+					// radial bin
+					skip_f77_record(ifs);
+					curr_pt 	+= (4+8*nbin+4);
+
+					// density
+					skip_f77_record(ifs);
+					curr_pt 	+= (4+8*nbin+4);
+				}
 				// input
 				in_gpt(gpt, gid, curr_pt_old);
 				
@@ -1112,6 +1133,19 @@ namespace IO_HM{
 
 					// skip profile
 					skip_f77_record(ifs);
+
+					// additional skip for GalaxyMaker Data
+					if(vh.horg == 'g'){
+						// # of bin
+						skip_f77_record(ifs);
+
+						// radial bin
+						skip_f77_record(ifs);
+					
+						// density
+						skip_f77_record(ifs);
+					}
+
 				
 					gal[i].snap 	= snap_curr;
 					gal[i].id 		= gid;
@@ -1260,7 +1294,7 @@ namespace IO {
 					u_stop();
 			}
 			// Wrong ID check
-			if(snap_curr <0){
+			if(id0 <0){
 					IO_dtype::IO_GID maxid = -1;
 					for(IO_dtype::IO_I32 i=0; i< (IO_dtype::IO_I32) gal.size(); i++){
 							if(gal[i].id >= maxid) maxid = gal[i].id;
