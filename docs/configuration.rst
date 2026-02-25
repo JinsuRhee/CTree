@@ -149,7 +149,7 @@ I/O related
      - h
      - Flag for the catalog type (Halo or Galaxy).
 
-       It is only used when reading the catalog data (``iotype = VELUGA``).
+       It is only used when reading the catalog data (``iotype = VELUGA`` and ``iotype = HM``).
    * -
      -
      -
