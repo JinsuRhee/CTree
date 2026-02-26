@@ -106,6 +106,7 @@ namespace IO_VR{
 	using VRT_merit		= IO_dtype::IO_merit;//double;
 	using VRT_BID 		= IO_dtype::IO_BID;//std::int32_t;		// Branch Index
 	using VRT_I32		= IO_dtype::IO_I32;//std::int32_t;
+	using VRT_I64 		= IO_dtype::IO_I64;
 	using VRT_double 	= IO_dtype::IO_double;
 
 	//----- For galaxy array
