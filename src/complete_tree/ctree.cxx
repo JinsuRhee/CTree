@@ -3524,7 +3524,21 @@ t0 = std::chrono::steady_clock::now();
 			// Read Data Type
 			std::int32_t bidtag;
 			loadtree_read(in, bidtag);
-		
+
+
+			// validate
+			if(bidtag == 1 && (sizeof(CT_BID) != sizeof(CT_I32))){
+				LOG()<<"	BID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_BID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I32);
+			}
+			if(bidtag == 2 && (sizeof(CT_BID) != sizeof(CT_I64))){
+				LOG()<<"	BID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_BID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I64);
+			}
+
+
 			// Read Nkey
 			std::int64_t nbid;
 			loadtree_read(in, nbid);
@@ -3535,9 +3549,9 @@ t0 = std::chrono::steady_clock::now();
 
 			// Allocate
 			//auto treekey_load = loadtree_mkvector(bidtag, nbid);
-			std::vector<std::int32_t> treekey_load;
+			std::vector<CT_BID> treekey_load;
 			treekey_load.resize(nbid);
-			loadtree_vecread<std::int32_t>(in, treekey_load, nbid);
+			loadtree_vecread<CT_BID>(in, treekey_load, nbid);
 
 			// Copy
 			//Tree::TreeKeyArray treekey;
@@ -3579,7 +3593,64 @@ t0 = std::chrono::steady_clock::now();
 			loadtree_read(in, snaptag);
 			loadtree_read(in, bidtag);
 			loadtree_read(in, mertag);
-		
+
+
+			// validate
+			bool nokay = false;
+			if(gidtag == 1 && (sizeof(CT_ID) != sizeof(CT_I32))){
+				LOG()<<"	ID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_ID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I32);
+				nokay 	= true;
+			}
+			if(gidtag == 2 && (sizeof(CT_ID) != sizeof(CT_I64))){
+				LOG()<<"	ID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_ID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I64);
+				nokay 	= true;
+			}
+
+			if(snaptag == 1 && (sizeof(CT_snap) != sizeof(CT_I32))){
+				LOG()<<"	Snap type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_snap);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I32);
+				nokay 	= true;
+			}
+			if(snaptag == 2 && (sizeof(CT_snap) != sizeof(CT_I64))){
+				LOG()<<"	Snap type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_snap);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I64);
+				nokay 	= true;
+			}
+
+			if(bidtag == 1 && (sizeof(CT_BID) != sizeof(CT_I32))){
+				LOG()<<"	BID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_BID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I32);
+				nokay 	= true;
+			}
+			if(bidtag == 2 && (sizeof(CT_BID) != sizeof(CT_I64))){
+				LOG()<<"	BID type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_BID);
+				LOG()<<"		saved 	 = "<<sizeof(CT_I64);
+				nokay 	= true;
+			}
+
+			if(mertag == 3 && (sizeof(CT_Merit) != sizeof(CT_float))){
+				LOG()<<"	Merit type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_Merit);
+				LOG()<<"		saved 	 = "<<sizeof(CT_float);
+				nokay 	= true;
+			}
+			if(mertag == 4 && (sizeof(CT_Merit) != sizeof(CT_double))){
+				LOG()<<"	Merit type is not matched in key loading";
+				LOG()<<"		compiled = "<<sizeof(CT_Merit);
+				LOG()<<"		saved 	 = "<<sizeof(CT_double);
+				nokay 	= true;
+			}
+			if(nokay) u_stop();
+
+
 			// Read Ntree
 			std::int64_t ntree, lastind;
 			loadtree_read(in, ntree);
@@ -3613,11 +3684,11 @@ t0 = std::chrono::steady_clock::now();
 				tree[i].p_snap.resize(nbranch);
 				tree[i].p_merit.resize(nbranch);
 
-				loadtree_vecread<std::int32_t>(in, tree[i].id, nbranch);
-				loadtree_vecread<std::int32_t>(in, tree[i].snap, nbranch);
-				loadtree_vecread<std::int32_t>(in, tree[i].p_id, nbranch);
-				loadtree_vecread<std::int32_t>(in, tree[i].p_snap, nbranch);
-				loadtree_vecread<double>(in, tree[i].p_merit, nbranch);
+				loadtree_vecread<CT_ID>(in, tree[i].id, nbranch);
+				loadtree_vecread<CT_snap>(in, tree[i].snap, nbranch);
+				loadtree_vecread<CT_ID>(in, tree[i].p_id, nbranch);
+				loadtree_vecread<CT_snap>(in, tree[i].p_snap, nbranch);
+				loadtree_vecread<CT_Merit>(in, tree[i].p_merit, nbranch);
 
 				if(nmerge >= 1){
 					tree[i].m_id.resize(nmerge);
@@ -3625,10 +3696,10 @@ t0 = std::chrono::steady_clock::now();
 					tree[i].m_merit.resize(nmerge);
 					tree[i].m_bid.resize(nmerge);
 
-					loadtree_vecread<std::int32_t>(in, tree[i].m_id, nmerge);
-					loadtree_vecread<std::int32_t>(in, tree[i].m_snap, nmerge);
-					loadtree_vecread<double>(in, tree[i].m_merit, nmerge);
-					loadtree_vecread<std::int32_t>(in, tree[i].m_bid, nmerge);
+					loadtree_vecread<CT_ID>(in, tree[i].m_id, nmerge);
+					loadtree_vecread<CT_snap>(in, tree[i].m_snap, nmerge);
+					loadtree_vecread<CT_Merit>(in, tree[i].m_merit, nmerge);
+					loadtree_vecread<CT_BID>(in, tree[i].m_bid, nmerge);
 				}
 
 
@@ -3656,6 +3727,10 @@ t0 = std::chrono::steady_clock::now();
 		// Data Size
 		std::int64_t n = static_cast<std::int64_t>(data.size());
 		out.write(reinterpret_cast<const char*>(&n), sizeof(n));
+
+		// PID type
+		std::int64_t pt = static_cast<std::int32_t>(sizeof(CT_PID));
+		out.write(reinterpret_cast<const char*>(&pt), sizeof(pt));
 
 		for(auto d : data){
 			out.write(reinterpret_cast<const char*>(&d.id), sizeof(d.id));
@@ -3702,10 +3777,21 @@ t0 = std::chrono::steady_clock::now();
 			u_stop();
 		}
 
+		
+
+
 		std::int64_t ndata;
 
 		loadtree_read(in, ndata);
 
+		// PID type
+		std::int64_t pt;
+		loadtree_read(in, pt);
+		if(pt != sizeof(CT_PID)){
+			LOG()<<"	Particle ID type is not matched";
+			LOG()<<"		compiled = "<<sizeof(CT_PID);
+			LOG()<<"		saved = "<<pt;
+		}
 		
 		ControlArray data = allocate(vh, ndata);
 

@@ -32,6 +32,7 @@ namespace Ctree{
 	using CT_snap 	= IO_dtype::IO_Snap;
 	using CT_PID 	= IO_dtype::IO_PID;
 	using CT_Merit 	= IO_dtype::IO_merit;
+	using CT_BID 	= IO_dtype::IO_BID;
 
 	// Branch Controller Array
 	struct ListSt{
