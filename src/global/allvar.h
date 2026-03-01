@@ -469,7 +469,11 @@ namespace Tree{
 		if(treedum.snap[0] <= to_snap){
 			LOG()<<"mis ordering in tree array :"<<keyval_org<<" / "<<snap<<" / "<<id;
 			LOG()<<" to "<<to_snap<<" / "<<to_id;
-			u_stop();
+#ifdef CTREE_USE_MPI
+			int errcode = 1;
+			MPI_Abort(MPI_COMM_WORLD, errcode);
+#endif
+			std::exit(errcode);
 		}
 		
 		
