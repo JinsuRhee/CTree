@@ -157,6 +157,13 @@ Python
 
 ``example/rdtree.py`` generates a pickle file containing the tree and key arrays.
 
+.. code-block:: bash
+    python3 rdtree.py
+
+    # if you want to convert a dump CTree result file (e.g., ctree_####.dat):
+    python3 rdtree.py --dump True
+
+
 The following script shows how to load the tree arrays and extract a branch of an object.
 
 
@@ -206,6 +213,13 @@ IDL
 
 ``example/rdtree.pro`` generates a sav file containing the tree and key arrays.
 
+.. code-block:: bash
+    idl -e rdtree
+
+    # if you want to convert a dump CTree result file (e.g., ctree_####.dat):
+    idl -e "rdtree, /rddump"
+
+
 .. code-block:: idl
 
    ; "ctree.sav" is what rdtree.pro generates
@@ -238,3 +252,4 @@ IDL
       PRINT, tree0.m_bid      ; Indices of the merged branches
                               ; , corresponding tree[ branch['m_bid'][:] ]
    ENDELSE
+

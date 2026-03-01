@@ -457,50 +457,48 @@ namespace Tree{
 		}
 
 
-		//Tree_Snap p_snap, Tree_GID p_id, Tree_merit p_merit, 
-		//Tree_Snap d_snap, Tree_GID d_id){
-
 		Tree_BID keyval_org;//, keyval_new;
-		//keyval_org 	= snap + key[0].key * id;
-		//keyval_new 	= to_snap + key[0].key * to_id;
+
 		keyval_org 	= snap + key[0] * id;
-		//keyval_new 	= to_snap + key[0] * to_id;
 
 		in_key(key, to_snap, to_id, key[keyval_org]);
-		//key[keyval_new].ind = key[keyval_org].ind;
-		//key[keyval_new] 	= key[keyval_org];
-
-		//TreeSt& treedum 	= tree[ key[keyval_org].ind ];
 		TreeSt& treedum 	= tree[ key[keyval_org] ];
 
 
-//int myrank  = mpi_rank();
-//if(myrank ==0 && snap == 49 && id == 1 && )
-//{
-//	
-//}	
-		if(to_snap > treedum.snap[treedum.endind]){
-			treedum.endind ++;
-			treevecinput<Tree_GID>(treedum.id, treedum.endind, to_id); 
-			treevecinput<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
-			//<Tree_GID>(treedum.p_id, treedum.endind, p_id); 
-			//treevecinput<Tree_Snap>(treedum.p_snap, treedum.endind, p_snap); 
-			treevecinput<Tree_merit>(treedum.p_merit, treedum.endind, merit);
-			//treevecinput<Tree_GID>(treedum.d_id, treedum.endind, d_id);
-			//treevecinput<Tree_Snap>(treedum.d_snap, treedum.endind, d_snap);
-	
-			//tree[ tree[0].lind ] = treedum;
-		}else if(to_snap < treedum.snap[0]){
-			treedum.endind ++;
-			treevecinput_tofirst<Tree_GID>(treedum.id, treedum.endind, to_id); 
-			treevecinput_tofirst<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
-			treevecinput_tofirst<Tree_merit>(treedum.p_merit, treedum.endind, merit); 
-		}else{
-			LOG()<<"Why this happens?";
-			int errcode = 1;
-			MPI_Abort(MPI_COMM_WORLD, errcode);
-			std::exit(errcode);
+		// debugging for tree order
+		if(treedum.snap[treedum.endind] <= to_snap){
+			LOG()<<"mis ordering in tree array :"<<keyval_org<<" / "<<snap<<" / "<<id;
+			LOG()<<" to "<<to_snap<<" / "<<to_id;
+			u_stop();
 		}
+		
+
+		treevecinput<Tree_GID>(treedum.id, treedum.endind, to_id); 
+		treevecinput<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
+		treevecinput<Tree_merit>(treedum.p_merit, treedum.endind, merit);
+		
+//		if(to_snap > treedum.snap[treedum.endind]){
+//			treedum.endind ++;
+//			treevecinput<Tree_GID>(treedum.id, treedum.endind, to_id); 
+//			treevecinput<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
+//			//<Tree_GID>(treedum.p_id, treedum.endind, p_id); 
+//			//treevecinput<Tree_Snap>(treedum.p_snap, treedum.endind, p_snap); 
+//			treevecinput<Tree_merit>(treedum.p_merit, treedum.endind, merit);
+//			//treevecinput<Tree_GID>(treedum.d_id, treedum.endind, d_id);
+//			//treevecinput<Tree_Snap>(treedum.d_snap, treedum.endind, d_snap);
+//	
+//			//tree[ tree[0].lind ] = treedum;
+//		}else if(to_snap < treedum.snap[0]){
+//			treedum.endind ++;
+//			treevecinput_tofirst<Tree_GID>(treedum.id, treedum.endind, to_id); 
+//			treevecinput_tofirst<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
+//			treevecinput_tofirst<Tree_merit>(treedum.p_merit, treedum.endind, merit); 
+//		}else{
+//			LOG()<<"Why this happens?";
+//			int errcode = 1;
+//			MPI_Abort(MPI_COMM_WORLD, errcode);
+//			std::exit(errcode);
+//		}
 
 	}
 

@@ -3702,6 +3702,25 @@ t0 = std::chrono::steady_clock::now();
 					loadtree_vecread<CT_BID>(in, tree[i].m_bid, nmerge);
 				}
 
+				// Sort main branch by snapshot-decreasing order
+				auto& id = tree[i].id;
+				auto& snap = tree[i].snap;
+				std::vector<std::pair<CT_snap, CT_ID>> tmp;
+
+				for(size_t j=0; j < snap.size(); j++){
+					tmp.emplace_back(snap[j], id[j]);
+				}
+				
+				std::sort(tmp.begin(), tmp.end(), 
+					[](auto &a, auto& b){
+						return a.first > b.first;
+					});
+				for(size_t j=0; j<tmp.size(); j++){
+					snap[j]	= tmp[j].first;
+					id[j] 	= tmp[j].second;
+				}
+
+
 
 			}
 
