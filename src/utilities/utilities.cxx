@@ -524,7 +524,7 @@ void loadtree_base(vctree_set::Settings& vh, Tree::TreeArray& tree, Tree::TreeKe
 			
 			std::sort(tmp.begin(), tmp.end(), 
 				[](auto &a, auto& b){
-					return a.first > b.first;
+					return a.first < b.first;
 				});
 			for(size_t j=0; j<tmp.size(); j++){
 				snap[j] = tmp[j].first;

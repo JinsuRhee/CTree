@@ -3713,7 +3713,7 @@ t0 = std::chrono::steady_clock::now();
 				
 				std::sort(tmp.begin(), tmp.end(), 
 					[](auto &a, auto& b){
-						return a.first > b.first;
+						return a.first < b.first;
 					});
 				for(size_t j=0; j<tmp.size(); j++){
 					snap[j]	= tmp[j].first;
