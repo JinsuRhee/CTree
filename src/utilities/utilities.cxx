@@ -516,7 +516,7 @@ void loadtree_base(vctree_set::Settings& vh, Tree::TreeArray& tree, Tree::TreeKe
 							// Sort main branch by snapshot-decreasing order
 			auto& id = tree[i].id;
 			auto& snap = tree[i].snap;
-			std::vector<std::pair<IO_snap, IO_GID>> tmp;
+			std::vector<std::pair<IO_dtype::IO_Snap, IO_dtype::IO_GID>> tmp;
 
 			for(size_t j=0; j < snap.size(); j++){
 				tmp.emplace_back(snap[j], id[j]);
