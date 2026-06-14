@@ -47,7 +47,8 @@ FUNCTION rdtree_rdtree, fname, rddump=rddump
 	READU, 1, bidtag
 	READU, 1, mertag
 
-	IF rddump EQ 1L THEN BEGIN
+	;IF rddump EQ 1L THEN BEGIN
+	IF KEYWORD_SET(rddump) THEN BEGIN
 		ntree 	= 0LL
 		READU, 1, ntree
 	ENDIF
@@ -82,7 +83,8 @@ FUNCTION rdtree_rdtree, fname, rddump=rddump
 		READU, 1, idtmp
 		READU, 1, snaptmp
 
-		IF rddump EQ 1L THEN BEGIN
+		;IF rddump EQ 1L THEN BEGIN
+		IF KEYWORD_SET(rddump) THEN BEGIN
 			pidtmp		= rdtree_mkarray(nbranch, gidtag)
 			psnaptmp	= rdtree_mkarray(nbranch, snaptag)
 			READU, 1, pidtmp
@@ -125,18 +127,13 @@ END
 
 PRO rdtree, rddump=rddump
 
-	IF ~KEYWORD_SET(rddump) THEN rddump = -1L
 
 	treename		= './ctree_key.dat'
 	keyname			= './ctree_tree.dat'
 	varname 		= './ctree.sav'
 
 	tree_key		= rdtree_rdkey(treename)
-	IF KEYWORD_SET(rddump) THEN BEGIN
-		tree_data 	= rdtree_rdtree(keyname, /rddump)
-	ENDIF ELSE BEGIN
-		tree_data	= rdtree_rdtree(keyname)
-	ENDELSE
+	tree_data	= rdtree_rdtree(keyname, rddump=rddump)
 
 
 	SAVE, filename=varname, tree_key, tree_data
