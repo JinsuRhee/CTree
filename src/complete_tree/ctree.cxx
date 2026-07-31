@@ -3305,7 +3305,15 @@ namespace Ctree
 
 		classify(vh, data, sinfo, vh.snapi, number);
 		finalize(vh, data, dkey, tree, key, sinfo, vh.snapi, number);
+
+		//-----
+		// extension branch down to z=0
+		//-----
 		extension(vh, tree, key, sinfo);
+
+		//-----
+		// Detect Merger
+		//-----
 		findmerge(vh, tree, key);
 	}
 
@@ -3697,6 +3705,84 @@ namespace Ctree
 		//----- Link Br
 		Tree::Tree_BID keyval, mykeyval;
 
+#ifdef CTREE_USE_MPI
+		int rank = 0, size = 1;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+		//----- Phase 1: resolve all case-3 (contested) merit decisions in one pass
+		std::vector<CT_I32> contested_i; // cut-positions that are case 3
+		for (CT_I32 i = 0; i < ncut; i++)
+		{
+			ind = cut[i];
+			CT_snap tosnap = data[ind].list[0].snap;
+			CT_ID toid = data[ind].list[0].id;
+
+			keyval = Tree::get_key(key, tosnap, toid);
+			mykeyval = Tree::get_key(key, data[ind].snap0, data[ind].id0);
+
+			if (keyval <= 0 || mykeyval == keyval)
+				continue;
+
+			Tree::TreeSt &comtree = tree[keyval];
+			if (comtree.snap[0] == tosnap)
+				continue;
+
+			contested_i.push_back(i);
+		}
+
+		CT_I32 n_contested = (CT_I32)contested_i.size();
+		std::vector<CT_I32> idx_local;
+		std::vector<char> win_local;
+
+		for (CT_I32 k = 0; k < n_contested; k++)
+		{
+			if (k % size != rank)
+				continue;
+
+			CT_I32 i = contested_i[k];
+			ind = cut[i];
+			CT_snap tosnap = data[ind].list[0].snap;
+			CT_ID toid = data[ind].list[0].id;
+			mykeyval = Tree::get_key(key, data[ind].snap0, data[ind].id0);
+			keyval = Tree::get_key(key, tosnap, toid);
+			Tree::TreeSt &mytree = tree[mykeyval];
+			Tree::TreeSt &comtree = tree[keyval];
+
+			CT_Merit merit_com = brcompare_extension(vh, tosnap, toid, comtree, snap_curr);
+			CT_Merit merit_org = brcompare_extension(vh, tosnap, toid, mytree, snap_curr);
+
+			idx_local.push_back(i);
+			win_local.push_back(merit_org > merit_com ? 1 : 0);
+		}
+
+		int sendcnt = (int)idx_local.size();
+		std::vector<int> recvcnts(size);
+		MPI_Allgather(&sendcnt, 1, MPI_INT, recvcnts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+		std::vector<int> displs(size, 0);
+		int total = 0;
+		for (int r = 0; r < size; r++)
+		{
+			displs[r] = total;
+			total += recvcnts[r];
+		}
+
+		std::vector<CT_I32> idx_all(total);
+		std::vector<char> win_all(total);
+		MPI_Allgatherv(idx_local.data(), sendcnt, MPI_INT, idx_all.data(), recvcnts.data(), displs.data(), MPI_INT, MPI_COMM_WORLD);
+		MPI_Allgatherv(win_local.data(), sendcnt, MPI_CHAR, win_all.data(), recvcnts.data(), displs.data(), MPI_CHAR, MPI_COMM_WORLD);
+
+		std::vector<char> win(ncut, 0);
+		for (int m = 0; m < total; m++)
+			win[idx_all[m]] = win_all[m];
+#endif
+
+		//----- Phase 2: apply tree/key changes for cases 1, 2, 3 (every rank, redundant)
+		std::vector<CT_I32> handled;
+		std::vector<CT_snap> collect_from_arr;
+		std::vector<Tree::Tree_BID> mykeyval_arr;
+
 		for (CT_I32 i = 0; i < ncut; i++)
 		{
 			ind = cut[i];
@@ -3706,27 +3792,13 @@ namespace Ctree
 
 			keyval = Tree::get_key(key, tosnap, toid);
 			mykeyval = Tree::get_key(key, data[ind].snap0, data[ind].id0);
-
 			Tree::TreeSt &mytree = tree[mykeyval];
-			if (keyval > 0)
+
+			CT_snap collect_from = tosnap;
+
+			if (keyval <= 0)
 			{
-
-				// at the moment, not touch the existing branch
-				// Tree::TreeSt& comtree = tree[keyval];
-
-				// CT_Merit merit_com = brcompare_extension(vh, tosnap, toid, comtree, snap_curr);
-				// CT_Merit merit_org = brcompare_extension(vh, tosnap, toid, mytree, snap_curr);
-
-				// if (merit_org > merit_com)
-				//{
-				// }
-				// else
-				//{
-				//	data[ind].stat = 0;
-				//}
-			}
-			else
-			{
+				// case 1: nobody owns this point yet
 				mytree.endind++;
 				Tree::treevecinput<Tree::Tree_GID>(mytree.id, mytree.endind, toid);
 				Tree::treevecinput<Tree::Tree_Snap>(mytree.snap, mytree.endind, tosnap);
@@ -3734,13 +3806,128 @@ namespace Ctree
 				Tree::in_key(key, tosnap, toid, mykeyval);
 
 				data[ind].stat = 0;
-				PIDArray cpid = collectpidalongbranch(vh, mytree, tosnap, true);
-				data[ind].p_list = std::move(cpid);
-				data[ind].n_ptcl = (CT_I32)data[ind].p_list.size();
 				data[ind].id0 = toid;
 				data[ind].snap0 = tosnap;
+				collect_from = tosnap;
 			}
+			else if (mykeyval == keyval)
+			{
+				// already mytree's own point -- nothing to do
+				continue;
+			}
+			else
+			{
+				Tree::TreeSt &comtree = tree[keyval];
+
+				if (comtree.snap[0] == tosnap)
+				{
+					// case 2: comtree starts exactly here -> absorb it whole
+					for (CT_I32 j = 0; j <= comtree.endind; j++)
+					{
+						mytree.endind++;
+						Tree::treevecinput<Tree::Tree_GID>(mytree.id, mytree.endind, comtree.id[j]);
+						Tree::treevecinput<Tree::Tree_Snap>(mytree.snap, mytree.endind, comtree.snap[j]);
+						Tree::treevecinput<Tree::Tree_merit>(mytree.p_merit, mytree.endind, comtree.p_merit[j]);
+						Tree::in_key(key, comtree.snap[j], comtree.id[j], mykeyval);
+					}
+					comtree.id.resize(0);
+					comtree.snap.resize(0);
+					comtree.p_merit.resize(0);
+					comtree.endind = -1;
+					comtree.isfree = 1;
+
+					data[ind].stat = 0;
+					data[ind].id0 = mytree.id[mytree.endind];
+					data[ind].snap0 = mytree.snap[mytree.endind];
+					collect_from = mytree.snap[mytree.endind];
+				}
+				else
+				{
+					// case 3: contested
+#ifdef CTREE_USE_MPI
+					bool win_case3 = (win[i] != 0);
+#else
+					CT_Merit merit_com = brcompare_extension(vh, tosnap, toid, comtree, snap_curr);
+					CT_Merit merit_org = brcompare_extension(vh, tosnap, toid, mytree, snap_curr);
+					bool win_case3 = (merit_org > merit_com);
+#endif
+
+					if (win_case3)
+					{
+						// retrieve the branch
+						CT_I32 orig_endind = comtree.endind;
+						CT_I32 endind_subtract = 0;
+						for (CT_I32 j = 0; j <= orig_endind; j++)
+						{
+							if (comtree.snap[j] < tosnap)
+								continue;
+
+							mytree.endind++;
+							Tree::treevecinput<Tree::Tree_GID>(mytree.id, mytree.endind, comtree.id[j]);
+							Tree::treevecinput<Tree::Tree_Snap>(mytree.snap, mytree.endind, comtree.snap[j]);
+							Tree::treevecinput<Tree::Tree_merit>(mytree.p_merit, mytree.endind, comtree.p_merit[j]);
+							Tree::in_key(key, comtree.snap[j], comtree.id[j], mykeyval);
+
+							comtree.snap[j] = -1;
+							comtree.id[j] = -1;
+							comtree.p_merit[j] = -1.;
+							endind_subtract++;
+						}
+						comtree.endind -= endind_subtract;
+					}
+
+					data[ind].stat = 0;
+					data[ind].id0 = mytree.id[mytree.endind];
+					data[ind].snap0 = mytree.snap[mytree.endind];
+					collect_from = mytree.snap[mytree.endind];
+				}
+			}
+
+			handled.push_back(i);
+			collect_from_arr.push_back(collect_from);
+			mykeyval_arr.push_back(mykeyval);
 		}
+
+		//----- Phase 3: collectpidalongbranch (expensive) -- owner only, then sync p_list
+#ifdef CTREE_USE_MPI
+		for (size_t h = 0; h < handled.size(); h++)
+		{
+			int owner = (int)h % size;
+			if (owner != rank)
+				continue;
+
+			ind = cut[handled[h]];
+			Tree::TreeSt &mytree = tree[mykeyval_arr[h]];
+			PIDArray cpid = collectpidalongbranch(vh, mytree, collect_from_arr[h], true);
+			data[ind].p_list = std::move(cpid);
+			data[ind].n_ptcl = (CT_I32)data[ind].p_list.size();
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+		for (size_t h = 0; h < handled.size(); h++)
+		{
+			ind = cut[handled[h]];
+			int owner = (int)h % size;
+
+			std::vector<std::uint8_t> blob_t;
+			if (rank == owner)
+				blob_t = serialize_d1(data[ind]);
+
+			bcast_blob_from_owner(owner, blob_t);
+
+			if (rank != owner)
+				deserialize_d1(blob_t, data[ind]);
+		}
+#else
+		for (size_t h = 0; h < handled.size(); h++)
+		{
+			ind = cut[handled[h]];
+			Tree::TreeSt &mytree = tree[mykeyval_arr[h]];
+			PIDArray cpid = collectpidalongbranch(vh, mytree, collect_from_arr[h], true);
+			data[ind].p_list = std::move(cpid);
+			data[ind].n_ptcl = (CT_I32)data[ind].p_list.size();
+		}
+#endif
 	}
 
 	void extension(vctree_set::Settings &vh, Tree::TreeArray &tree, Tree::TreeKeyArray &key, IO::snapinfo &sinfo)
@@ -3913,8 +4100,7 @@ namespace Ctree
 			if (myrank == 0)
 				LOG() << "      EXTENSION AT SNAP " << i4(snap_curr);
 
-			//-----
-			auto t0 = std::chrono::steady_clock::now();
+						auto t0 = std::chrono::steady_clock::now();
 			classify_extension(vh, data, snap_curr);
 #ifdef CTREE_USE_MPI
 			MPI_Barrier(MPI_COMM_WORLD);

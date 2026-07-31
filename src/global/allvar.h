@@ -207,6 +207,10 @@ namespace vctree_set
 		// int32_t tarr_size = vctree_parameters::tarr_size;
 		int32_t ctree_nstep = vctree_parameters::ctree_nstep;
 		int32_t ctree_npid = vctree_parameters::ctree_npid;
+
+		// For debug
+		int32_t debug_n1 = 0;
+		int32_t debug_n2 = 0;
 	};
 }
 
