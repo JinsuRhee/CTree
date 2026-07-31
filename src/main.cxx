@@ -57,7 +57,8 @@ int main(int argc, char **argv)
     {
       LOG() << "Program starts";
       LOG() << "  Start time: " << vctree_log::timestamp_full();
-      LOG() << "  Commit: " << GIT_COMMIT_HASH;
+      LOG() << "  Last Commit: " << GIT_COMMIT_HASH;
+      LOG() << " ";
     }
   }
 
