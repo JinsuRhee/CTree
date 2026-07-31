@@ -3136,9 +3136,6 @@ namespace Ctree
 			LOG() << "    Ctree) Main loop starts";
 		for (CT_I32 i = sinfo.size() - 1; i >= 0; i--)
 		{
-			LOG() << "remove here";
-			break;
-
 			if (sinfo[i].snum < 0)
 				continue;
 
@@ -3305,21 +3302,6 @@ namespace Ctree
 			MPI_Barrier(MPI_COMM_WORLD);
 #endif
 		}
-
-		// remove here
-		if (myrank == 0)
-		{
-			savedata(vh, data, 1);
-			savetree_ctree(vh, tree, key, 1);
-		}
-
-		ControlArray data2 = loaddata(vh, vh.loadcheck);
-		Tree::TreeArray tree2;
-		Tree::TreeKeyArray key2;
-		loadtree_ctree(vh, tree2, key2, vh.loadcheck);
-		data = std::move(data2);
-		tree = std::move(tree2);
-		key = std::move(key2);
 
 		classify(vh, data, sinfo, vh.snapi, number);
 		finalize(vh, data, dkey, tree, key, sinfo, vh.snapi, number);

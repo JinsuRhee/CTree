@@ -64,7 +64,7 @@ function rdtree_rdtree, fname, rddump = rddump
     fid = rdtree_mkarray(1, bidtag)
     tstat = 0l
     readu, 1, nbranch
-    stop
+    
     if nbranch le 0l then begin
       tree[i] = ptr_new({stat: -1l})
       continue
