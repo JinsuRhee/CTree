@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
     	u_stop();
     } else{
     	LOG()  << "Program starts";
+    	LOG()  << "  Start time: " << vctree_log::timestamp_full();
     }
   }
 
