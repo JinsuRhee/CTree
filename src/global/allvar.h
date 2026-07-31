@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <chrono>
 #include <ctime>
-#include <filesystem>   // C++17
+#include <filesystem> // C++17
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -14,208 +14,230 @@
 #include <vector>
 
 #ifdef CTREE_USE_MPI
-	#include <mpi.h>
+#include <mpi.h>
 #endif
 
-
-
 // Control variables
-namespace vctree_parameters{
+namespace vctree_parameters
+{
 	// array size for the elements of tree arrays
-	//inline int32_t sarr_size = 1000;
-	//inline int32_t barr_size = 100;
-	//inline int32_t tarr_size = 10000;
-	inline int32_t ctree_nstep 	= 10000;
-	inline int32_t ctree_npid 	= 100000;
+	// inline int32_t sarr_size = 1000;
+	// inline int32_t barr_size = 100;
+	// inline int32_t tarr_size = 10000;
+	inline int32_t ctree_nstep = 10000;
+	inline int32_t ctree_npid = 100000;
 }
-
 
 // For Definitions
 // [YY:MM:DD:SS] [main.cpp] [123] ' message'
-#define LOG()   vctree_log::Line(vctree_log::basename_cstr(__FILE__), __LINE__)
+#define LOG() vctree_log::Line(vctree_log::basename_cstr(__FILE__), __LINE__)
 // [YY:MM:DD:SS] [MYCODE] [123] ' message'
 #define LOGC(x) vctree_log::Line((x), __LINE__)
 
 //-----
 // Name space For Settings definition
 //-----
-namespace vctree_set{
+namespace vctree_set
+{
 
 	// Create Settings structure
-	struct vr_pointerSt{ int32_t fnum=-1; int64_t offset; int32_t offset_pb; int32_t offset_pu; int32_t nb; int32_t nu; int32_t nt;};
-	
+	struct vr_pointerSt
+	{
+		int32_t fnum = -1;
+		int64_t offset;
+		int32_t offset_pb;
+		int32_t offset_pu;
+		int32_t nb;
+		int32_t nu;
+		int32_t nt;
+	};
 
-	struct snapSt{
-		std::int32_t snum = -1;			// snapshot number
+	struct snapSt
+	{
+		std::int32_t snum = -1; // snapshot number
 	};
 
 	using snapinfo = std::vector<snapSt>;
 
-	
-	struct Settings {
-		std::string iotype 		= "VELUGA";			  // IO type
-		//std::string	simtype		= "Ramses";		  // Simulation type
-		
+	struct Settings
+	{
+		std::string iotype = "VELUGA"; // IO type
+		// std::string	simtype		= "Ramses";		  // Simulation type
 
 		std::string branchmaker = "N";
-		std::string brtype 		= "TF";
+		std::string brtype = "TF";
 
-		std::string loadtree 	= "Y";
+		std::string loadtree = "Y";
 		std::string loadtree_ftree = "";
-		std::string loadtree_fkey  = "";
+		std::string loadtree_fkey = "";
 
-		char        horg        = 'g';            	  // 'g' or 'h'
+		char horg = 'g'; // 'g' or 'h'
 
 		// For VELUGA IO
-		std::string veluga_dir_catalog 	= "./catalog/";   // VELUGA output directory
-		//std::string vr_dir_tree    = "";              // TreeFrog data is stored
-		
-		
+		std::string veluga_dir_catalog = "./catalog/"; // VELUGA output directory
+		// std::string vr_dir_tree    = "";              // TreeFrog data is stored
+
 		// For VR IO
-		std::string vr_dir_catalog 	= "./catalog/";   // VELUGA output directory
+		std::string vr_dir_catalog = "./catalog/"; // VELUGA output directory
 		std::string vr_dir_catalog_prefix = "";
 		std::string vr_dir_catalog_suffix = "";
 		int32_t vr_dir_catalog_snapdigit = 4;
-		std::vector< std::vector<vr_pointerSt> > vr_gpointer;
-		
-
+		std::vector<std::vector<vr_pointerSt> > vr_gpointer;
 
 		// For HM IO
-		std::string hm_dir_catalog 	= "./catalog/";
-		std::vector< std::vector<int64_t> > hm_gpointer;
-
+		std::string hm_dir_catalog = "./catalog/";
+		std::vector<std::vector<int64_t> > hm_gpointer;
 
 		// For Arbitrary IO
-		std::string any_dir_catalog 	= "./catalog/";   // VELUGA output directory
+		std::string any_dir_catalog = "./catalog/"; // VELUGA output directory
 		std::string any_dir_catalog_prefix = "";
 		std::string any_dir_catalog_suffix = "";
 		int32_t any_dir_catalog_snapdigit = 4;
 
-
 		// RAMSES related
-		//std::string ramses_dir = "";     // unflagged
-		
+		// std::string ramses_dir = "";     // unflagged
 
 		// General settings
-		int32_t snapi   = 70;              // snapshot range
-		int32_t snapf   = 200;
-		std::string snaplist = ""; 		   // snapshot list file
-		double  meritlimit = 0.001;        // melit lower limit to close the branch
-		std::string treedir     = "des";   // Tree direction
-		std::string out_dir     = "";   // Tree direction
-		int32_t minbranchlength = 10;		// Minimum length of brnach
-
+		int32_t snapi = 70; // snapshot range
+		int32_t snapf = 200;
+		std::string snaplist = "";	  // snapshot list file
+		double meritlimit = 0.001;	  // melit lower limit to close the brsanch
+		std::string treedir = "des";  // Tree direction
+		std::string out_dir = "";	  // Tree direction
+		int32_t minbranchlength = 10; // Minimum length of brnach
 
 		// makebr related
-		int64_t treekey     = 1000;  // 10^n; should be larger than the last snapshot number
-
+		int64_t treekey = 1000; // 10^n; should be larger than the last snapshot number
 
 		// complete_tree related
-		double meritfrac		= 0.5;
-		int32_t n_search   		= 10;     // number of snapshots to be searched simultaneously
-		int32_t n_search2 		= 10;
-		int32_t core_n   		= 10;     // number of branch points (>10) when collecting particles on a existing branch
-		int32_t core_dn  		= 5;      // dN between the points (corresponding to 200 MYr seems good)
-		double core_minfrac 	= 0.25;
-		//double  ctree_rfact     = 10.;    // Find Candidate galaxies within a sphere of a radius of speed * rfact * dT (10 seems good)
-		int32_t weighttype= 1; 	   // Weighting type (1 :TF )
+		double meritfrac = 0.5;
+		int32_t n_search = 10; // number of snapshots to be searched simultaneously
+		int32_t n_search2 = 10;
+		int32_t core_n = 10; // number of branch points (>10) when collecting particles on a existing branch
+		int32_t core_dn = 5; // dN between the points (corresponding to 200 MYr seems good)
+		double core_minfrac = 0.25;
+		// double  ctree_rfact     = 10.;    // Find Candidate galaxies within a sphere of a radius of speed * rfact * dT (10 seems good)
+		int32_t weighttype = 1; // Weighting type (1 :TF )
+
+		double brmerit_pow1 = 1.;
+		double brmerit_pow2 = 1.;
 
 		int32_t makecheck = -1;
 		int32_t loadcheck = -1;
 		// TreeFrog I/O related
-		std::string tag_num     = "";
-		std::string tag_off     = "";
-		std::string tag_result  = "";
-		std::string tag_npart   = "";
-		std::string tag_merit   = "";
-		std::string tag_nlink   = "";
+		std::string tag_num = "";
+		std::string tag_off = "";
+		std::string tag_result = "";
+		std::string tag_npart = "";
+		std::string tag_merit = "";
+		std::string tag_nlink = "";
 		std::string tf_dir = "";
 
 		snapinfo sinfo;
 
 		// Some utils
-		void finalize_paths() {
-			if (iotype == "VELUGA"){
-				veluga_dir_catalog = veluga_dir_catalog + (horg=='g' ? "/Galaxy/VR_Galaxy" : "/Halo/VR_Halo");
+		void finalize_paths()
+		{
+			if (iotype == "VELUGA")
+			{
+				veluga_dir_catalog = veluga_dir_catalog + (horg == 'g' ? "/Galaxy/VR_Galaxy" : "/Halo/VR_Halo");
 			}
 		}
 
 		// Read snapshot list
-		void read_snaplist() {
+		void read_snaplist()
+		{
 			std::vector<int32_t> slist;
 			int32_t maxsnap = -1;
-			if(std::filesystem::exists(snaplist)){
+			if (std::filesystem::exists(snaplist))
+			{
 				std::ifstream file(snaplist);
 				std::string line;
 				int32_t value;
 
-				while (std::getline(file, line)) {
-					if (line.empty()) continue;
+				while (std::getline(file, line))
+				{
+					if (line.empty())
+						continue;
 					value = std::stoi(line);
 					slist.push_back(value);
 
-					if(value > maxsnap) maxsnap = value;
+					if (value > maxsnap)
+						maxsnap = value;
 				}
 				std::sort(slist.begin(), slist.end());
-				snapi 	= slist[0];
-				snapf 	= maxsnap;
+				snapi = slist[0];
+				snapf = maxsnap;
 
 				file.close();
-			}else{
-				for(int32_t i=snapi; i<snapf+1; i++){
+			}
+			else
+			{
+				for (int32_t i = snapi; i < snapf + 1; i++)
+				{
 					slist.push_back(i);
-					if(i > maxsnap) maxsnap = i;
+					if (i > maxsnap)
+						maxsnap = i;
 				}
 			}
 
 			//----- Allocate Snap
-			sinfo.resize(maxsnap+1);
+			sinfo.resize(maxsnap + 1);
 
 			//----- Read Info
-			for (int32_t s : slist) {
-				sinfo[s].snum 	= s;
+			for (int32_t s : slist)
+			{
+				sinfo[s].snum = s;
 			}
-
 
 			//----- Allocate key variables
-			if(iotype == "HM"){
-				hm_gpointer.resize(snapf+1);
+			if (iotype == "HM")
+			{
+				hm_gpointer.resize(snapf + 1);
 			}
-			if(iotype == "VR"){
-				vr_gpointer.resize(snapf+1);
+			if (iotype == "VR")
+			{
+				vr_gpointer.resize(snapf + 1);
 			}
 		}
 
-
 		// Bring control varibles
-		//int32_t sarr_size = vctree_parameters::sarr_size;
-		//int32_t barr_size = vctree_parameters::barr_size;
-		//int32_t tarr_size = vctree_parameters::tarr_size;
-		int32_t ctree_nstep 	= vctree_parameters::ctree_nstep;
-		int32_t ctree_npid 		= vctree_parameters::ctree_npid;
+		// int32_t sarr_size = vctree_parameters::sarr_size;
+		// int32_t barr_size = vctree_parameters::barr_size;
+		// int32_t tarr_size = vctree_parameters::tarr_size;
+		int32_t ctree_nstep = vctree_parameters::ctree_nstep;
+		int32_t ctree_npid = vctree_parameters::ctree_npid;
 
+		// For debug
+		int32_t debug_n1 = 0;
+		int32_t debug_n2 = 0;
 	};
 }
-
 
 //-----
 // Name space For Log printing
 //-----
-namespace vctree_log{
+namespace vctree_log
+{
 	// Extract Filename
-	inline const char* basename_cstr(const char* path) {
-		const char* base = path;
-		for (const char* p = path; *p; ++p) {
-			if (*p == '/' || *p == '\\') base = p + 1;
+	inline const char *basename_cstr(const char *path)
+	{
+		const char *base = path;
+		for (const char *p = path; *p; ++p)
+		{
+			if (*p == '/' || *p == '\\')
+				base = p + 1;
 		}
 		return base;
 	}
 
-	// Time Stamp
-	inline std::string timestamp_yy_mm_dd_ss() {
+	// Time Stamp : full date-time (year, month, day, hour, minute, second)
+	// printed once, right after "Program starts"
+	inline std::string timestamp_full()
+	{
 		using namespace std::chrono;
 		const auto now = system_clock::now();
-		const auto tt  = system_clock::to_time_t(now);
+		const auto tt = system_clock::to_time_t(now);
 		std::tm tm{};
 #if defined(_WIN32)
 		localtime_s(&tm, &tt);
@@ -223,114 +245,141 @@ namespace vctree_log{
 		localtime_r(&tt, &tm);
 #endif
 		std::ostringstream oss;
-		oss << '[' << std::put_time(&tm, "%y:%m:%d:%S") << ']'; // YY:MM:DD:SS
+		oss << std::put_time(&tm, "%Y:%m:%d:%H:%M:%S");
+		return oss.str();
+	}
+
+	// Reference point for elapsed-time logging; first call fixes the origin
+	// (effectively "program start", since the first LOG() line is the very
+	// first thing that triggers this).
+	inline std::chrono::steady_clock::time_point &start_tp()
+	{
+		static std::chrono::steady_clock::time_point t = std::chrono::steady_clock::now();
+		return t;
+	}
+
+	// Elapsed seconds since start_tp(), fixed-width for column alignment
+	inline std::string elapsed_sec_str()
+	{
+		using namespace std::chrono;
+		const auto elapsed = duration_cast<seconds>(steady_clock::now() - start_tp()).count();
+		std::ostringstream oss;
+		oss << '[' << std::setw(7) << elapsed << "s]";
 		return oss.str();
 	}
 
 	// Config
-	struct Config {
+	struct Config
+	{
 #ifdef LOGGER_THREAD_SAFE
 		std::mutex mu;
 #endif
 	};
 
-	inline Config& cfg() { static Config c; return c; }
+	inline Config &cfg()
+	{
+		static Config c;
+		return c;
+	}
 
 	// Log by line
-	class Line {
-		public:
-			Line(const char* code, int line) : code_(code), line_(line) {}
-			~Line() {
+	class Line
+	{
+	public:
+		Line(const char *code, int line) : code_(code), line_(line) {}
+		~Line()
+		{
 #ifdef LOGGER_THREAD_SAFE
 			std::lock_guard<std::mutex> lock(cfg().mu);
 #endif
-			std::ostream& out = std::cout;
-			out << timestamp_yy_mm_dd_ss()
+			std::ostream &out = std::cout;
+			out << elapsed_sec_str()
 				<< " [" << std::setw(16) << code_ << "] "
 				<< "[" << std::setw(4) << line_ << "] "
 				<< " " << ss_.str() << "\n";
-			}
-			template<typename T>
-			Line& operator<<(const T& v) { ss_ << v; return *this; }
+		}
+		template <typename T>
+		Line &operator<<(const T &v)
+		{
+			ss_ << v;
+			return *this;
+		}
 
-		private:
-			const char* code_;
-			int line_;
-			std::ostringstream ss_;
+	private:
+		const char *code_;
+		int line_;
+		std::ostringstream ss_;
 	};
 }
-
-
 
 //-----
 // Data Type For Tree Array
 //-----
-namespace Tree{
+namespace Tree
+{
 
 #if defined(CTREE_ID_INT64)
-	using Tree_GID 		= std::int64_t;		// for galaxy ID
+	using Tree_GID = std::int64_t; // for galaxy ID
 #else
-	using Tree_GID 		= std::int32_t;		// for galaxy ID
+	using Tree_GID = std::int32_t; // for galaxy ID
 #endif
 
 #if defined(CTREE_SNAP_INT64)
-	using Tree_Snap 	= std::int64_t;
+	using Tree_Snap = std::int64_t;
 #else
-	using Tree_Snap 	= std::int32_t;
+	using Tree_Snap = std::int32_t;
 #endif
 
 #if defined(CTREE_PARTID_INT32)
-	using Tree_PID 	 	= std::int32_t;		// for particle ID
+	using Tree_PID = std::int32_t; // for particle ID
 #else
-	using Tree_PID 	 	= std::int64_t;		// for particle ID
+	using Tree_PID = std::int64_t; // for particle ID
 #endif
 
 #if defined(CTREE_MERIT_FLOAT32)
-	using Tree_merit	= float;
+	using Tree_merit = float;
 #else
-	using Tree_merit	= double;
+	using Tree_merit = double;
 #endif
 
-
-
-	using Tree_BID 		= std::int32_t;		// Branch Index
-	using Tree_I32 		= std::int32_t;
-	using Tree_I64 		= std::int64_t;
+	using Tree_BID = std::int32_t; // Branch Index
+	using Tree_I32 = std::int32_t;
+	using Tree_I64 = std::int64_t;
 
 	inline Tree_I32 tree_stepsize = 100;
 
-	struct TreeSt{
+	struct TreeSt
+	{
 		std::vector<Tree_GID> id = std::vector<Tree_GID>(tree_stepsize);
 		std::vector<Tree_Snap> snap = std::vector<Tree_Snap>(tree_stepsize);
 		std::vector<Tree_GID> p_id = std::vector<Tree_GID>(tree_stepsize);
 		std::vector<Tree_Snap> p_snap = std::vector<Tree_Snap>(tree_stepsize);
 		std::vector<Tree_merit> p_merit = std::vector<Tree_merit>(tree_stepsize);
-		//std::vector<Tree_GID> d_id = std::vector<Tree_GID>(tree_stepsize);
-		//std::vector<Tree_Snap> d_snap = std::vector<Tree_Snap>(tree_stepsize);
+		// std::vector<Tree_GID> d_id = std::vector<Tree_GID>(tree_stepsize);
+		// std::vector<Tree_Snap> d_snap = std::vector<Tree_Snap>(tree_stepsize);
 
-		
-		std::vector<Tree_GID> m_id; 			// id list merged into this branch
-		std::vector<Tree_Snap> m_snap;			// snap list merged into this branch
-		std::vector<Tree_merit> m_merit;		// merit when merged
-		std::vector<Tree_BID> m_bid;			// tree index for the mergered branch
+		std::vector<Tree_GID> m_id;		 // id list merged into this branch
+		std::vector<Tree_Snap> m_snap;	 // snap list merged into this branch
+		std::vector<Tree_merit> m_merit; // merit when merged
+		std::vector<Tree_BID> m_bid;	 // tree index for the mergered branch
 
-		Tree_I32 father_bid = -1; 				// if this branch is merged into another, father tree index
-		Tree_I32 frag_bid = -1; 				// if this branch is fragmented, originated branch index;
+		Tree_I32 father_bid = -1; // if this branch is merged into another, father tree index
+		Tree_I32 frag_bid = -1;	  // if this branch is fragmented, originated branch index;
 
 		Tree_I32 numprog = 0;
 		Tree_I32 endind = -1; // last index of TreeSt
 
-		Tree_I32 stat = 0; 	// 0 (normal) (-1) natrual end (-2) fragmented
+		Tree_I32 stat = 0; // 0 (normal) (-1) natrual end (-2) fragmented
 
 		Tree_BID lind = 0; // last index of vec<TreeST> only stored in the first tree
 
 		Tree_I32 isfree = -1; // only used when MPI used in Ctree
 	};
 
-	//struct TreeKey{
+	// struct TreeKey{
 	//	Tree_BID ind = -1;
 	//	Tree_I64 key = 0; // only stored in the first tree
-	//};
+	// };
 	using TreeKey = Tree_BID;
 
 	using TreeArray = std::vector<TreeSt>;
@@ -338,183 +387,204 @@ namespace Tree{
 
 	// Vector Input
 	template <typename T>
-	void treevecinput(std::vector<T>& v, Tree_I32 ind, T val){
-		
-		if( (double) ind >= (double) v.size()*0.8){
+	void treevecinput(std::vector<T> &v, Tree_I32 ind, T val)
+	{
+
+		if ((double)ind >= (double)v.size() * 0.8)
+		{
 			v.resize(v.size() + tree_stepsize, T{});
 		}
 		v[ind] = val;
 
-		//LOG()<<ind<<" / "<<val<<" / "<<v[ind];
+		// LOG()<<ind<<" / "<<val<<" / "<<v[ind];
 	}
 
 	// Vector Input
 	template <typename T>
-	void treevecinput_tofirst(std::vector<T>& v, Tree_I32 ind, T val){
-		
-		if( (double) ind >= (double) v.size()*0.8){
+	void treevecinput_tofirst(std::vector<T> &v, Tree_I32 ind, T val)
+	{
+
+		if ((double)ind >= (double)v.size() * 0.8)
+		{
 			v.resize(v.size() + tree_stepsize, T{});
 		}
 		v.insert(v.begin(), val);
 	}
 
-	inline void re_key(TreeKeyArray& key, Tree_BID ind){
+	inline void re_key(TreeKeyArray &key, Tree_BID ind)
+	{
 
-		Tree_BID newsize = key.size()*1.1;
-		if(ind > newsize) newsize = ind+1;
+		Tree_BID newsize = key.size() * 1.1;
+		if (ind > newsize)
+			newsize = ind + 1;
 		key.resize(newsize, {-1});
 	}
 
-	inline void in_key(TreeKeyArray& key, Tree_Snap snap, Tree_GID id, Tree_BID ind){
-		Tree_BID keyval = snap + key[0]*id;
-		if(keyval >= (Tree_BID) key.size()) re_key(key, keyval);
-		key[keyval]	= ind;
+	inline void in_key(TreeKeyArray &key, Tree_Snap snap, Tree_GID id, Tree_BID ind)
+	{
+		Tree_BID keyval = snap + key[0] * id;
+		if (keyval >= (Tree_BID)key.size())
+			re_key(key, keyval);
+		key[keyval] = ind;
 	}
 
-	inline Tree_BID get_key(TreeKeyArray& key, Tree_Snap snap, Tree_GID id){
-		Tree_BID keyval = snap + key[0]*id;
-		if(keyval >= (Tree_BID) key.size()) return -1;
-		else return key[keyval];
+	inline Tree_BID get_key(TreeKeyArray &key, Tree_Snap snap, Tree_GID id)
+	{
+		Tree_BID keyval = snap + key[0] * id;
+		if (keyval >= (Tree_BID)key.size())
+			return -1;
+		else
+			return key[keyval];
 	}
 
-	inline void tree_resize(TreeArray& tree, Tree_BID bid){
-			if( (Tree_BID) tree.size() > bid) return;
-
-			Tree_BID stepsize = 10000 + bid;
-
-			tree.resize(stepsize);
+	inline void tree_resize(TreeArray &tree, Tree_BID bid)
+	{
+		if ((Tree_BID)tree.size() > bid)
 			return;
 
+		Tree_BID stepsize = 10000 + bid;
+
+		tree.resize(stepsize);
+		return;
 	}
-	inline void treeinit(TreeArray& tree, TreeKeyArray& key, 
-		Tree_Snap snap, Tree_GID id){
+	inline void treeinit(TreeArray &tree, TreeKeyArray &key,
+						 Tree_Snap snap, Tree_GID id)
+	{
 
-		tree[0].lind ++;
-		//Tree_I64 keyval;
-		Tree_BID keyval 	= snap + key[0]*id;
-		//keyval 	= snap + key[0].key * id;
+		tree[0].lind++;
+		// Tree_I64 keyval;
+		Tree_BID keyval = snap + key[0] * id;
+		// keyval 	= snap + key[0].key * id;
 
-		key[keyval]		= tree[0].lind;
-		//key[keyval].ind = tree[0].lind;
+		key[keyval] = tree[0].lind;
+		// key[keyval].ind = tree[0].lind;
 
 		tree_resize(tree, tree[0].lind);
-		//if(tree[0].lind >= (Tree_BID) tree.size()){
+		// if(tree[0].lind >= (Tree_BID) tree.size()){
 		//	tree.resize(tree.size() + tree_stepsize);
-		//}
+		// }
 
-		TreeSt& treedum 	= tree[ tree[0].lind ];
+		TreeSt &treedum = tree[tree[0].lind];
 
-		treedum.endind ++;
-		treevecinput<Tree_GID>(treedum.id, treedum.endind, id); 
-		treevecinput<Tree_Snap>(treedum.snap, treedum.endind, snap); 
+		treedum.endind++;
+		treevecinput<Tree_GID>(treedum.id, treedum.endind, id);
+		treevecinput<Tree_Snap>(treedum.snap, treedum.endind, snap);
 		treevecinput<Tree_merit>(treedum.p_merit, treedum.endind, 0.);
-
 	}
 
-	inline bool istree(TreeKeyArray& key, Tree_Snap snap, Tree_GID id){
+	inline bool istree(TreeKeyArray &key, Tree_Snap snap, Tree_GID id)
+	{
 		Tree_BID keyval = get_key(key, snap, id);
-		//keyval 	= snap + key[0].key * id;
-		if(keyval > 0){
+		// keyval 	= snap + key[0].key * id;
+		if (keyval > 0)
+		{
 			return true;
 		}
-		else{
-			return false;	
-		} 
+		else
+		{
+			return false;
+		}
 	}
 
-	inline TreeSt gettree(TreeArray& tree, TreeKeyArray& key, Tree_Snap snap, Tree_GID id){
+	inline TreeSt gettree(TreeArray &tree, TreeKeyArray &key, Tree_Snap snap, Tree_GID id)
+	{
 		Tree_BID keyval = get_key(key, snap, id);
-		//keyval 	= snap + key[0].key * id;
+		// keyval 	= snap + key[0].key * id;
 		TreeSt tree0;
 
 		int rank = 0, size = 1;
 #ifdef CTREE_USE_MPI
-		
+
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-		if(!istree(key, snap, id)){
-			LOG()<<"no tree matched: "<<snap<<" / "<<id<<" / "<<rank;
+		if (!istree(key, snap, id))
+		{
+			LOG() << "no tree matched: " << snap << " / " << id << " / " << rank;
 #ifdef CTREE_USE_MPI
 			int errcode = 1;
 			MPI_Abort(MPI_COMM_WORLD, errcode);
 #endif
 			std::exit(errcode);
-		}else{
+		}
+		else
+		{
 			tree0 = tree[keyval];
 		}
 
 		return tree0;
 	}
 
-	
+	inline void treeinput(TreeArray &tree, TreeKeyArray &key,
+						  Tree_Snap snap, Tree_GID id, Tree_Snap to_snap, Tree_GID to_id, Tree_merit merit)
+	{
 
-	inline void treeinput(TreeArray& tree, TreeKeyArray& key, 
-		Tree_Snap snap, Tree_GID id, Tree_Snap to_snap, Tree_GID to_id, Tree_merit merit){
-
-		if(!istree(key, snap, id)){
+		if (!istree(key, snap, id))
+		{
 			treeinit(tree, key, snap, id);
 		}
 
+		Tree_BID keyval_org; //, keyval_new;
 
-		Tree_BID keyval_org;//, keyval_new;
-
-		keyval_org 	= snap + key[0] * id;
+		keyval_org = snap + key[0] * id;
 
 		in_key(key, to_snap, to_id, key[keyval_org]);
-		TreeSt& treedum 	= tree[ key[keyval_org] ];
-
+		TreeSt &treedum = tree[key[keyval_org]];
 
 		// debugging for tree order
-		if(treedum.snap[0] <= to_snap){
-			LOG()<<"mis ordering in tree array :"<<keyval_org<<" / "<<snap<<" / "<<id;
-			LOG()<<" from "<<treedum.snap[0]<<" / "<<treedum.id[0];
-			LOG()<<" to "<<to_snap<<" / "<<to_id;
+		if (treedum.snap[0] <= to_snap)
+		{
+			LOG() << "mis ordering in tree array :" << keyval_org << " / " << snap << " / " << id;
+			LOG() << " from " << treedum.snap[0] << " / " << treedum.id[0];
+			LOG() << " to " << to_snap << " / " << to_id;
 #ifdef CTREE_USE_MPI
 			int errcode = 1;
 			MPI_Abort(MPI_COMM_WORLD, errcode);
 #endif
 			std::exit(errcode);
 		}
-		
-		
-		if(to_snap > treedum.snap[treedum.endind]){
-			LOG()<<"This should not be happened";
+
+		if (to_snap > treedum.snap[treedum.endind])
+		{
+			LOG() << "This should not be happened";
 			int errcode = 1;
 			MPI_Abort(MPI_COMM_WORLD, errcode);
 			std::exit(errcode);
 
-			treedum.endind ++;
-			treevecinput<Tree_GID>(treedum.id, treedum.endind, to_id); 
+			treedum.endind++;
+			treevecinput<Tree_GID>(treedum.id, treedum.endind, to_id);
 			treevecinput<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
-			//<Tree_GID>(treedum.p_id, treedum.endind, p_id); 
-			//treevecinput<Tree_Snap>(treedum.p_snap, treedum.endind, p_snap); 
+			//<Tree_GID>(treedum.p_id, treedum.endind, p_id);
+			// treevecinput<Tree_Snap>(treedum.p_snap, treedum.endind, p_snap);
 			treevecinput<Tree_merit>(treedum.p_merit, treedum.endind, merit);
-			//treevecinput<Tree_GID>(treedum.d_id, treedum.endind, d_id);
-			//treevecinput<Tree_Snap>(treedum.d_snap, treedum.endind, d_snap);
-	
-			//tree[ tree[0].lind ] = treedum;
-		}else if(to_snap < treedum.snap[0]){
-			treedum.endind ++;
-			treevecinput_tofirst<Tree_GID>(treedum.id, treedum.endind, to_id); 
+			// treevecinput<Tree_GID>(treedum.d_id, treedum.endind, d_id);
+			// treevecinput<Tree_Snap>(treedum.d_snap, treedum.endind, d_snap);
+
+			// tree[ tree[0].lind ] = treedum;
+		}
+		else if (to_snap < treedum.snap[0])
+		{
+			treedum.endind++;
+			treevecinput_tofirst<Tree_GID>(treedum.id, treedum.endind, to_id);
 			treevecinput_tofirst<Tree_Snap>(treedum.snap, treedum.endind, to_snap);
-			treevecinput_tofirst<Tree_merit>(treedum.p_merit, treedum.endind, merit); 
-		}else{
-			LOG()<<"Why this happens?";
+			treevecinput_tofirst<Tree_merit>(treedum.p_merit, treedum.endind, merit);
+		}
+		else
+		{
+			LOG() << "Why this happens?";
 			int errcode = 1;
 			MPI_Abort(MPI_COMM_WORLD, errcode);
 			std::exit(errcode);
 		}
-
 	}
 
-	
-	inline void treefree(TreeArray& tree, TreeKeyArray& key, Tree_Snap snap, Tree_GID id){
+	inline void treefree(TreeArray &tree, TreeKeyArray &key, Tree_Snap snap, Tree_GID id)
+	{
 
-		
-		if(!istree(key, snap, id)){
-			LOG()<<"Why?";
+		if (!istree(key, snap, id))
+		{
+			LOG() << "Why?";
 			int errcode = 1;
 			MPI_Abort(MPI_COMM_WORLD, errcode);
 			std::exit(errcode);
@@ -522,18 +592,17 @@ namespace Tree{
 		}
 
 		Tree_BID keyval = get_key(key, snap, id);
-		//keyval 	= snap + key[0].key * id;
-		TreeSt& tree0 = tree[ keyval ];
-
-		
+		// keyval 	= snap + key[0].key * id;
+		TreeSt &tree0 = tree[keyval];
 
 		// free key
-		
-		for(Tree_I32 i=0; i<tree0.endind+1; i++){
 
-			//keyval 	= tree0.snap[i] + key[0].key * tree0.id[i];
-			keyval 	= tree0.snap[i] + key[0] * tree0.id[i];
-			//key[keyval].ind = -1;
+		for (Tree_I32 i = 0; i < tree0.endind + 1; i++)
+		{
+
+			// keyval 	= tree0.snap[i] + key[0].key * tree0.id[i];
+			keyval = tree0.snap[i] + key[0] * tree0.id[i];
+			// key[keyval].ind = -1;
 			key[keyval] = -1;
 		}
 
@@ -553,24 +622,29 @@ namespace Tree{
 	}
 
 	// remove connection point before cut_snap
-	inline void modifytree(TreeArray& tree, TreeKeyArray& key, Tree_Snap snap, Tree_GID id, Tree_Snap cut_snap){
+	inline void modifytree(TreeArray &tree, TreeKeyArray &key, Tree_Snap snap, Tree_GID id, Tree_Snap cut_snap)
+	{
 		Tree_BID keyval = get_key(key, snap, id);
 
-		TreeSt& tree0	= tree[keyval];
+		TreeSt &tree0 = tree[keyval];
 
 		// modify the tree
 		Tree_I32 nnn = 0;
-		std::vector<Tree_I32> mod_ind(tree0.endind+1);
+		std::vector<Tree_I32> mod_ind(tree0.endind + 1);
 
-		for(Tree_I32 i=0; i<tree0.endind+1; i++){
-			if(tree0.snap[i] > cut_snap){
+		for (Tree_I32 i = 0; i < tree0.endind + 1; i++)
+		{
+			if (tree0.snap[i] > cut_snap)
+			{
 				mod_ind[nnn] = i;
-				nnn ++;
+				nnn++;
 			}
 		}
 
-		if(nnn == 0){
-			if(tree0.endind == 0 && tree0.snap[0] == cut_snap && tree0.snap[tree0.endind] == cut_snap){ // single snapshot case
+		if (nnn == 0)
+		{
+			if (tree0.endind == 0 && tree0.snap[0] == cut_snap && tree0.snap[tree0.endind] == cut_snap)
+			{ // single snapshot case
 				treefree(tree, key, snap, id);
 			}
 			return;
@@ -582,36 +656,38 @@ namespace Tree{
 		std::vector<Tree_Snap> new_snap(tree0.snap.size());
 		std::vector<Tree_merit> new_merit(tree0.p_merit.size());
 
-		for(Tree_I32 i=0; i<nnn; i++){
-			new_id[i] 		= tree0.id[mod_ind[i]];
-			new_snap[i] 	= tree0.snap[mod_ind[i]];
-			new_merit[i] 	= tree0.p_merit[mod_ind[i]];
-
+		for (Tree_I32 i = 0; i < nnn; i++)
+		{
+			new_id[i] = tree0.id[mod_ind[i]];
+			new_snap[i] = tree0.snap[mod_ind[i]];
+			new_merit[i] = tree0.p_merit[mod_ind[i]];
 		}
 
-		for(Tree_I32 i=0; i<tree0.endind+1; i++){
-			//key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = -1;
-			key[ tree0.snap[i] + key[0]*tree0.id[i] ] = -1;
+		for (Tree_I32 i = 0; i < tree0.endind + 1; i++)
+		{
+			// key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = -1;
+			key[tree0.snap[i] + key[0] * tree0.id[i]] = -1;
 		}
-
 
 		tree0.id.clear();
 		tree0.snap.clear();
 		tree0.p_merit.clear();
 
-		tree0.id 		= std::move(new_id);
-		tree0.snap 		= std::move(new_snap);
-		tree0.p_merit 	= std::move(new_merit);
-		tree0.endind 	= nnn-1;
+		tree0.id = std::move(new_id);
+		tree0.snap = std::move(new_snap);
+		tree0.p_merit = std::move(new_merit);
+		tree0.endind = nnn - 1;
 
-		for(Tree_I32 i=0; i<nnn; i++){
-			//key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = keyval;
-			key[ tree0.snap[i] + key[0]*tree0.id[i] ] = keyval;
+		for (Tree_I32 i = 0; i < nnn; i++)
+		{
+			// key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = keyval;
+			key[tree0.snap[i] + key[0] * tree0.id[i]] = keyval;
 		}
 
 		//
 
-		if(tree0.numprog > 0){
+		if (tree0.numprog > 0)
+		{
 			std::vector<Tree_GID> new_mid(tree0.numprog);
 			std::vector<Tree_Snap> new_snap(tree0.numprog);
 			std::vector<Tree_merit> new_merit(tree0.numprog);
@@ -619,14 +695,16 @@ namespace Tree{
 
 			Tree_I32 np = 0;
 
-			for(Tree_I32 i=0; i<tree0.numprog; i++){
-				if(tree0.m_snap[i] > cut_snap){
-					//mod_ind[np] 	= i;
-					new_mid[np] 	= tree0.m_id[i];
-					new_snap[np] 	= tree0.m_snap[i];
-					new_merit[np]	= tree0.m_merit[i];
-					new_bid[np]		= tree0.m_bid[i];
-					np ++;
+			for (Tree_I32 i = 0; i < tree0.numprog; i++)
+			{
+				if (tree0.m_snap[i] > cut_snap)
+				{
+					// mod_ind[np] 	= i;
+					new_mid[np] = tree0.m_id[i];
+					new_snap[np] = tree0.m_snap[i];
+					new_merit[np] = tree0.m_merit[i];
+					new_bid[np] = tree0.m_bid[i];
+					np++;
 				}
 			}
 
@@ -636,35 +714,41 @@ namespace Tree{
 			tree0.m_bid.clear();
 			tree0.numprog = 0;
 
-			if(np > 0){
-				//mod_ind.resize(np);
+			if (np > 0)
+			{
+				// mod_ind.resize(np);
 
-				tree0.m_id 		= std::move(new_mid);
-				tree0.m_snap	= std::move(new_snap);
-				tree0.m_merit	= std::move(new_merit);
-				tree0.m_bid 	= std::move(new_bid);
-				tree0.numprog 	= np;
+				tree0.m_id = std::move(new_mid);
+				tree0.m_snap = std::move(new_snap);
+				tree0.m_merit = std::move(new_merit);
+				tree0.m_bid = std::move(new_bid);
+				tree0.numprog = np;
 			}
 		}
 	}
 
-	inline void modifytree_byindex(TreeArray& tree, TreeKeyArray& key, Tree_BID bid, Tree_Snap cut_snap){
+	inline void modifytree_byindex(TreeArray &tree, TreeKeyArray &key, Tree_BID bid, Tree_Snap cut_snap)
+	{
 
-		TreeSt& tree0	= tree[bid];
+		TreeSt &tree0 = tree[bid];
 
 		// modify the tree
 		Tree_I32 nnn = 0;
-		std::vector<Tree_I32> mod_ind(tree0.endind+1);
+		std::vector<Tree_I32> mod_ind(tree0.endind + 1);
 
-		for(Tree_I32 i=0; i<tree0.endind+1; i++){
-			if(tree0.snap[i] > cut_snap){
+		for (Tree_I32 i = 0; i < tree0.endind + 1; i++)
+		{
+			if (tree0.snap[i] > cut_snap)
+			{
 				mod_ind[nnn] = i;
-				nnn ++;
+				nnn++;
 			}
 		}
 
-		if(nnn == 0){
-			if(tree0.endind == 0 && tree0.snap[0] == cut_snap && tree0.snap[tree0.endind] == cut_snap){ // single snapshot case
+		if (nnn == 0)
+		{
+			if (tree0.endind == 0 && tree0.snap[0] == cut_snap && tree0.snap[tree0.endind] == cut_snap)
+			{ // single snapshot case
 				treefree(tree, key, tree0.snap[0], tree0.id[0]);
 			}
 			return;
@@ -676,34 +760,37 @@ namespace Tree{
 		std::vector<Tree_Snap> new_snap(tree0.snap.size());
 		std::vector<Tree_merit> new_merit(tree0.p_merit.size());
 
-		for(Tree_I32 i=0; i<nnn; i++){
-			new_id[i] 		= tree0.id[mod_ind[i]];
-			new_snap[i] 	= tree0.snap[mod_ind[i]];
-			new_merit[i] 	= tree0.p_merit[mod_ind[i]];
+		for (Tree_I32 i = 0; i < nnn; i++)
+		{
+			new_id[i] = tree0.id[mod_ind[i]];
+			new_snap[i] = tree0.snap[mod_ind[i]];
+			new_merit[i] = tree0.p_merit[mod_ind[i]];
 		}
 
-		for(Tree_I32 i=0; i<tree0.endind+1; i++){
-			key[ tree0.snap[i] + key[0]*tree0.id[i] ] = -1;
+		for (Tree_I32 i = 0; i < tree0.endind + 1; i++)
+		{
+			key[tree0.snap[i] + key[0] * tree0.id[i]] = -1;
 		}
-
 
 		tree0.id.clear();
 		tree0.snap.clear();
 		tree0.p_merit.clear();
 
-		tree0.id 		= std::move(new_id);
-		tree0.snap 		= std::move(new_snap);
-		tree0.p_merit 	= std::move(new_merit);
-		tree0.endind 	= nnn-1;
+		tree0.id = std::move(new_id);
+		tree0.snap = std::move(new_snap);
+		tree0.p_merit = std::move(new_merit);
+		tree0.endind = nnn - 1;
 
-		for(Tree_I32 i=0; i<nnn; i++){
-			//key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = keyval;
-			key[ tree0.snap[i] + key[0]*tree0.id[i] ] = bid;
+		for (Tree_I32 i = 0; i < nnn; i++)
+		{
+			// key[ tree0.snap[i] + key[0].key*tree0.id[i] ].ind = keyval;
+			key[tree0.snap[i] + key[0] * tree0.id[i]] = bid;
 		}
 
 		//
 
-		if(tree0.numprog > 0){
+		if (tree0.numprog > 0)
+		{
 			std::vector<Tree_GID> new_mid(tree0.numprog);
 			std::vector<Tree_Snap> new_snap(tree0.numprog);
 			std::vector<Tree_merit> new_merit(tree0.numprog);
@@ -711,14 +798,16 @@ namespace Tree{
 
 			Tree_I32 np = 0;
 
-			for(Tree_I32 i=0; i<tree0.numprog; i++){
-				if(tree0.m_snap[i] > cut_snap){
-					//mod_ind[np] 	= i;
-					new_mid[np] 	= tree0.m_id[i];
-					new_snap[np] 	= tree0.m_snap[i];
-					new_merit[np]	= tree0.m_merit[i];
-					new_bid[np]		= tree0.m_bid[i];
-					np ++;
+			for (Tree_I32 i = 0; i < tree0.numprog; i++)
+			{
+				if (tree0.m_snap[i] > cut_snap)
+				{
+					// mod_ind[np] 	= i;
+					new_mid[np] = tree0.m_id[i];
+					new_snap[np] = tree0.m_snap[i];
+					new_merit[np] = tree0.m_merit[i];
+					new_bid[np] = tree0.m_bid[i];
+					np++;
 				}
 			}
 
@@ -728,17 +817,17 @@ namespace Tree{
 			tree0.m_bid.clear();
 			tree0.numprog = 0;
 
-			if(np > 0){
-				//mod_ind.resize(np);
+			if (np > 0)
+			{
+				// mod_ind.resize(np);
 
-				tree0.m_id 		= std::move(new_mid);
-				tree0.m_snap	= std::move(new_snap);
-				tree0.m_merit	= std::move(new_merit);
-				tree0.m_bid 	= std::move(new_bid);
-				tree0.numprog 	= np;
+				tree0.m_id = std::move(new_mid);
+				tree0.m_snap = std::move(new_snap);
+				tree0.m_merit = std::move(new_merit);
+				tree0.m_bid = std::move(new_bid);
+				tree0.numprog = np;
 			}
 		}
-
 	}
 }
 
@@ -747,62 +836,81 @@ namespace Tree{
 //-----
 // mpi_types.h
 #ifdef CTREE_USE_MPI
-namespace mpi_type {
-	
-	template<typename T>
+namespace mpi_type
+{
+
+	template <typename T>
 	MPI_Datatype type();
 
 	// ---- 32-bit signed ----
-	template<> inline MPI_Datatype type<std::int32_t>() {
-	#ifdef MPI_INT32_T
+	template <>
+	inline MPI_Datatype type<std::int32_t>()
+	{
+#ifdef MPI_INT32_T
 		return MPI_INT32_T;
-	#else
-		if (sizeof(int)  == 4) return MPI_INT;
-		if (sizeof(long) == 4) return MPI_LONG;
-		if (sizeof(short)== 4) return MPI_SHORT;
+#else
+		if (sizeof(int) == 4)
+			return MPI_INT;
+		if (sizeof(long) == 4)
+			return MPI_LONG;
+		if (sizeof(short) == 4)
+			return MPI_SHORT;
 		throw std::logic_error("No 32-bit MPI integer type available");
-	#endif
+#endif
 	}
 
 	// ---- 32-bit unsigned ----
-	template<> inline MPI_Datatype type<std::uint32_t>() {
-	#ifdef MPI_UINT32_T
+	template <>
+	inline MPI_Datatype type<std::uint32_t>()
+	{
+#ifdef MPI_UINT32_T
 		return MPI_UINT32_T;
-	#else
-		if (sizeof(unsigned int)  == 4) return MPI_UNSIGNED;
-		if (sizeof(unsigned long) == 4) return MPI_UNSIGNED_LONG;
-		if (sizeof(unsigned short)== 4) return MPI_UNSIGNED_SHORT;
+#else
+		if (sizeof(unsigned int) == 4)
+			return MPI_UNSIGNED;
+		if (sizeof(unsigned long) == 4)
+			return MPI_UNSIGNED_LONG;
+		if (sizeof(unsigned short) == 4)
+			return MPI_UNSIGNED_SHORT;
 		throw std::logic_error("No 32-bit MPI unsigned type available");
-	#endif
+#endif
 	}
 
 	// ---- 64-bit signed ----
-	template<> inline MPI_Datatype type<std::int64_t>() {
-	#ifdef MPI_INT64_T
+	template <>
+	inline MPI_Datatype type<std::int64_t>()
+	{
+#ifdef MPI_INT64_T
 		return MPI_INT64_T;
-	#else
-		if (sizeof(long long) == 8) return MPI_LONG_LONG;
-		if (sizeof(long)      == 8) return MPI_LONG;      // LP64
+#else
+		if (sizeof(long long) == 8)
+			return MPI_LONG_LONG;
+		if (sizeof(long) == 8)
+			return MPI_LONG; // LP64
 		throw std::logic_error("No 64-bit MPI integer type available");
-	#endif
+#endif
 	}
 
 	// ---- 64-bit unsigned ----
-	template<> inline MPI_Datatype type<std::uint64_t>() {
-	#ifdef MPI_UINT64_T
+	template <>
+	inline MPI_Datatype type<std::uint64_t>()
+	{
+#ifdef MPI_UINT64_T
 		return MPI_UINT64_T;
-	#else
-		if (sizeof(unsigned long long) == 8) return MPI_UNSIGNED_LONG_LONG;
-		if (sizeof(unsigned long)      == 8) return MPI_UNSIGNED_LONG; // LP64
+#else
+		if (sizeof(unsigned long long) == 8)
+			return MPI_UNSIGNED_LONG_LONG;
+		if (sizeof(unsigned long) == 8)
+			return MPI_UNSIGNED_LONG; // LP64
 		throw std::logic_error("No 64-bit MPI unsigned type available");
-	#endif
+#endif
 	}
 
 	// ---- float / double ----
-	template<> inline MPI_Datatype type<float>()  { return MPI_FLOAT;  }
-	template<> inline MPI_Datatype type<double>() { return MPI_DOUBLE; }
-
-
+	template <>
+	inline MPI_Datatype type<float>() { return MPI_FLOAT; }
+	template <>
+	inline MPI_Datatype type<double>() { return MPI_DOUBLE; }
 
 } // namespace mpi_type
 #endif // CTREE_USE_MPI
@@ -810,6 +918,5 @@ namespace mpi_type {
 //-----
 // Global functions
 //-----
-bool g_load_config(const std::string& path, vctree_set::Settings& vh);
-bool g_set_config(vctree_set::Settings& vh);
-
+bool g_load_config(const std::string &path, vctree_set::Settings &vh);
+bool g_set_config(vctree_set::Settings &vh);

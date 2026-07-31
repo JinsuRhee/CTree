@@ -1,141 +1,138 @@
-FUNCTION rdtree_mkarray, n, tag
+function rdtree_mkarray, n, tag
+  compile_opt idl2
 
-	CASE tag OF
-		1L: RETURN, LONARR(n)
-		2L: RETURN, LON64ARR(n)
-		3L: RETURN, FLTARR(n)
-		4L: RETURN, DBLARR(n)
-	ENDCASE
-END
+  case tag of
+    1l: RETURN, lonarr(n)
+    2l: RETURN, lon64arr(n)
+    3l: RETURN, fltarr(n)
+    4l: RETURN, dblarr(n)
+  endcase
+end
 
-FUNCTION rdtree_rdkey, fname
-	OPENR, 1, fname
+function rdtree_rdkey, fname
+  compile_opt idl2
+  openr, 1, fname
 
-	bidtag	= 0L
-	READU, 1, bidtag
+  bidtag = 0l
+  readu, 1, bidtag
 
-	nkey 	= 0LL
-	READU, 1, nkey
+  nkey = 0ll
+  readu, 1, nkey
 
-	key 	= rdtree_mkarray(nkey, bidtag)
+  key = rdtree_mkarray(nkey, bidtag)
 
-	keyval 	= 0LL
-	READU, 1, keyval
+  keyval = 0ll
+  readu, 1, keyval
 
-	READU, 1, key
+  readu, 1, key
 
+  close, 1
 
-	CLOSE, 1 
+  key[0] = keyval
 
+  RETURN, key
+end
 
-	key(0)	= keyval
+function rdtree_rdtree, fname, rddump = rddump
+  compile_opt idl2
+  openr, 1, fname
 
+  gidtag = 0l
+  snaptag = 0l
+  bidtag = 0l
+  mertag = 0l
 
-	RETURN, key
-END
+  readu, 1, gidtag
+  readu, 1, snaptag
+  readu, 1, bidtag
+  readu, 1, mertag
 
-FUNCTION rdtree_rdtree, fname, rddump=rddump
-	OPENR, 1, fname
+  if keyword_set(rddump) then begin
+    ntree = 0ll
+    readu, 1, ntree
+  endif
 
-	gidtag 	= 0L
-	snaptag = 0L
-	bidtag 	= 0L
-	mertag	= 0L
+  lind = 0ll
+  readu, 1, lind
 
-	READU, 1, gidtag
-	READU, 1, snaptag
-	READU, 1, bidtag
-	READU, 1, mertag
+  tree = ptrarr(lind + 1ll)
 
-	IF KEYWORD_SET(rddump) THEN BEGIN
-		ntree 	= 0LL
-		READU, 1, ntree
-	ENDIF
+  for i = 0l, lind do begin
+    nbranch = 0l
+    nmerge = 0l
+    ; fid 		= 0L
+    fid = rdtree_mkarray(1, bidtag)
+    tstat = 0l
+    readu, 1, nbranch
+    
+    if nbranch le 0l then begin
+      tree[i] = ptr_new({stat: -1l})
+      continue
+    endif
 
-	lind	= 0LL
-	READU, 1, lind
+    readu, 1, nmerge
+    readu, 1, fid
+    readu, 1, tstat
 
-	tree 	= PTRARR(lind+1LL)
+    idtmp = rdtree_mkarray(nbranch, gidtag)
+    snaptmp = rdtree_mkarray(nbranch, snaptag)
 
-	FOR i=0L, lind DO BEGIN
-		nbranch 	= 0L
-		nmerge 		= 0L
-		;fid 		= 0L
-		fid 		= rdtree_mkarray(1, bidtag)
-		tstat		= 0L
-		READU, 1, nbranch
+    mertmp = rdtree_mkarray(nbranch, mertag)
 
-		IF nbranch LE 0L THEN BEGIN
-			tree(i)	= PTR_NEW({stat:-1L})
-			CONTINUE
-		ENDIF
+    readu, 1, idtmp
+    readu, 1, snaptmp
 
-		READU, 1, nmerge
-		READU, 1, fid
-		READU, 1, tstat
+    if keyword_set(rddump) then begin
+      pidtmp = rdtree_mkarray(nbranch, gidtag)
+      psnaptmp = rdtree_mkarray(nbranch, snaptag)
+      readu, 1, pidtmp
+      readu, 1, psnaptmp
+    endif
 
-		idtmp 		= rdtree_mkarray(nbranch, gidtag)
-		snaptmp		= rdtree_mkarray(nbranch, snaptag)
+    readu, 1, mertmp
 
-		mertmp 		= rdtree_mkarray(nbranch, mertag)
-		
-		READU, 1, idtmp
-		READU, 1, snaptmp
+    if nmerge ge 1l then begin
+      midtmp = rdtree_mkarray(nmerge, gidtag)
+      msnaptmp = rdtree_mkarray(nmerge, snaptag)
+      mmertmp = rdtree_mkarray(nmerge, mertag)
+      mbidtmp = rdtree_mkarray(nmerge, bidtag)
 
-		IF KEYWORD_SET(rddump) THEN BEGIN
-			pidtmp		= rdtree_mkarray(nbranch, gidtag)
-			psnaptmp	= rdtree_mkarray(nbranch, snaptag)
-			READU, 1, pidtmp
-			READU, 1, psnaptmp
-		ENDIF
+      readu, 1, midtmp
+      readu, 1, msnaptmp
+      readu, 1, mmertmp
+      readu, 1, mbidtmp
+    endif else begin
+      midtmp = rdtree_mkarray(1, gidtag)
+      msnaptmp = rdtree_mkarray(1, snaptag)
+      mmertmp = rdtree_mkarray(1, mertag)
+      mbidtmp = rdtree_mkarray(1, bidtag)
+    endelse
 
-		READU, 1, mertmp
+    tmp = {br_len: nbranch, father_id: fid, n_mergebr: nmerge, $
+      id: idtmp, snap: snaptmp, $ ; p_id:pidtmp, p_snap:psnaptmp,
+      merit: mertmp, $
+      m_id: midtmp, m_snap: msnaptmp, m_merit: mmertmp, m_bid: mbidtmp, $
+      stat: 1l}
+    tree[i] = ptr_new(tmp)
+  endfor
 
-		IF nmerge GE 1L THEN BEGIN
-			midtmp 			= rdtree_mkarray(nmerge, gidtag)
-			msnaptmp 		= rdtree_mkarray(nmerge, snaptag)
-			mmertmp 		= rdtree_mkarray(nmerge, mertag)
-			mbidtmp 		= rdtree_mkarray(nmerge, bidtag)
+  close, 1
 
-			READU, 1, midtmp
-			READU, 1, msnaptmp
-			READU, 1, mmertmp
-			READU, 1, mbidtmp
-		ENDIF ELSE BEGIN
-			midtmp 			= rdtree_mkarray(1, gidtag)
-			msnaptmp 		= rdtree_mkarray(1, snaptag)
-			mmertmp 		= rdtree_mkarray(1, mertag)
-			mbidtmp 		= rdtree_mkarray(1, bidtag)
+  tree = tree[0l : lind]
+  RETURN, tree
+end
 
-		ENDELSE
+pro rdtree, rddump = rddump
+  compile_opt idl2
 
-		tmp 	= {br_len:nbranch, father_ID:fid, n_mergebr:nmerge, $
-			id:idtmp, snap:snaptmp, $;p_id:pidtmp, p_snap:psnaptmp, 
-			merit:mertmp, $
-			m_id:midtmp, m_snap:msnaptmp, m_merit:mmertmp, m_bid:mbidtmp, $
-			stat:1L}
-		tree(i)	= PTR_NEW(tmp)
-	ENDFOR
+  treename = './ctree_key.dat'
+  keyname = './ctree_tree.dat'
+  varname = './ctree.sav'
 
-	CLOSE, 1
+  tree_key = rdtree_rdkey(treename)
+  tree_data = rdtree_rdtree(keyname, rddump = rddump)
 
-	tree 	= tree(0L:lind)
-	RETURN, tree
-END
+  save, filename = varname, tree_key, tree_data
 
-PRO rdtree, rddump=rddump
-
-	treename		= './ctree_key.dat'
-	keyname			= './ctree_tree.dat'
-	varname 		= './ctree.sav'
-
-	tree_key		= rdtree_rdkey(treename)
-	tree_data	= rdtree_rdtree(keyname, rddump=rddump)
-
-
-	SAVE, filename=varname, tree_key, tree_data
-	
-
-	
-	STOP
-END
+  stop
+end
