@@ -7,10 +7,9 @@ Branch-wise Merger Tree Builder
 3) Pursues high compatibility with different catalogs
 4) Aims for strong performance in large cosmological simulations
 
-Introduction paper: ''
+Introduction paper: https://arxiv.org/abs/2609.08086
 User-manuel: https://veluga-ctree.readthedocs.io/en/latest/index.html
 
 Recent updates:
 
 - Feb. 2026: released
-- Intro paper: https://arxiv.org/abs/2609.08086
