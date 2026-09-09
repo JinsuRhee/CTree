@@ -13,3 +13,4 @@ User-manuel: https://veluga-ctree.readthedocs.io/en/latest/index.html
 Recent updates:
 
 - Feb. 2026: released
+- Intro paper: https://arxiv.org/abs/2609.08086
