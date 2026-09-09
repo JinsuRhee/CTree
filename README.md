@@ -8,6 +8,7 @@ Branch-wise Merger Tree Builder
 4) Aims for strong performance in large cosmological simulations
 
 Introduction paper: https://arxiv.org/abs/2609.08086
+
 User-manuel: https://veluga-ctree.readthedocs.io/en/latest/index.html
 
 Recent updates:
